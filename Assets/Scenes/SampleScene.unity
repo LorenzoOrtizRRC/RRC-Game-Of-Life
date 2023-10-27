@@ -170,7 +170,8 @@ MonoBehaviour:
   _gridCamera: {fileID: 519420031}
   _cellPrefab: {fileID: 8903818850590035807, guid: a54e5d73d4ee7104bb586811b3444ff6, type: 3}
   _gridRows: 30
-  _gridColumns: 30
+  _gridColumns: 53
+  _gridUpdateIntervalInSeconds: 0.01
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0

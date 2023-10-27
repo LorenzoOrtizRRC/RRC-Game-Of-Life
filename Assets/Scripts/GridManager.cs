@@ -10,8 +10,10 @@ public class GridManager : MonoBehaviour
     [Header("Grid Settings")]
     [SerializeField, Min(1)] private int _gridRows = 1;
     [SerializeField, Min(1)] private int _gridColumns = 1;
+    [SerializeField, Min(0.01f)] private float _gridUpdateIntervalInSeconds = 0.4f;
 
     private GridCell[,] _grid;
+    private List<GridCell> _trackedCells = new List<GridCell>();
     private Vector2 _spriteScaling;// = 0f;
     private Vector2 _spriteBounds;
     private Vector2 _cellOffset;
@@ -35,6 +37,13 @@ public class GridManager : MonoBehaviour
     {
         GenerateGrid();
         AssignNeighbours();
+
+        // Assign live cells to tracked cells list.
+        _trackedCells = new List<GridCell>();
+        foreach (GridCell cell in _grid)
+        {
+            if (cell.IsAlive && !_trackedCells.Contains(cell)) _trackedCells.Add(cell);
+        }
     }
 
     public void GenerateGrid()
@@ -45,6 +54,9 @@ public class GridManager : MonoBehaviour
             for (int column = 0; column < _gridColumns; column++)
             {
                 GridCell newCell = Instantiate(_cellPrefab);
+                newCell.OnCellAlive += TrackCellState;
+                newCell.OnCellDead += UntrackCellState;
+
                 Vector2 newPosition = new Vector2(_spriteBounds.x * column, _spriteBounds.y * row) + _cellOffset + _gridStartPosition;
                 newCell.transform.position = newPosition;
                 //newCell.transform.localScale = _spriteScaling;
@@ -69,8 +81,6 @@ public class GridManager : MonoBehaviour
                     {
                         if (localRow == 0 && localColumn == 0) continue;
                         Vector2Int neighbourIndex = new Vector2Int(row + localRow, column + localColumn);
-                        print(neighbourIndex);
-                        print(ValidGridIndex(row + localRow, column + localColumn));
                         if (ValidGridIndex(row + localRow, column + localColumn))
                         {
                             _grid[row, column].AddNeighbour(_grid[neighbourIndex.x, neighbourIndex.y]);
@@ -80,6 +90,9 @@ public class GridManager : MonoBehaviour
             }
         }
     }
+
+    private void TrackCellState(GridCell cell) => _trackedCells.Add(cell);
+    private void UntrackCellState(GridCell cell) => _trackedCells.Remove(cell);
 
     private bool ValidGridIndex(int row, int column)
     {

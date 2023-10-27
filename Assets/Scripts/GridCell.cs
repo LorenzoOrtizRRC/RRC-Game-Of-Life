@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -5,6 +6,9 @@ using UnityEngine;
 
 public class GridCell : MonoBehaviour
 {
+    public Action<GridCell> OnCellAlive;
+    public Action<GridCell> OnCellDead;
+
     [SerializeField] private SpriteRenderer _renderer;
     [SerializeField] private bool _isAlive = false;
 
@@ -43,6 +47,9 @@ public class GridCell : MonoBehaviour
     {
         _isAlive = isAlive;
         UpdateColor();
+
+        if (isAlive) OnCellAlive?.Invoke(this);
+        else OnCellDead?.Invoke(this);
     }
 
     private void UpdateColor()
