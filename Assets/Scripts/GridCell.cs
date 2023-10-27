@@ -11,7 +11,7 @@ public class GridCell : MonoBehaviour
     public bool IsAlive => _isAlive;
     public Vector2 SpriteBounds => _renderer.sprite.bounds.size;
 
-    private GridCell[] _neighbours = new GridCell[0];
+    private List<GridCell> _neighbours = new List<GridCell>(8);
 
     // Used by player inputs.
     public void ManualToggleCellState()
@@ -32,6 +32,11 @@ public class GridCell : MonoBehaviour
         if (!IsAlive && liveNeighbours == 3) ToggleCellState(true);
         else if (liveNeighbours < 2 || liveNeighbours > 3) ToggleCellState(false);
         else ToggleCellState(true);
+    }
+
+    public void AddNeighbour(GridCell neighbour)
+    {
+        _neighbours.Add(neighbour);
     }
 
     private void ToggleCellState(bool isAlive)

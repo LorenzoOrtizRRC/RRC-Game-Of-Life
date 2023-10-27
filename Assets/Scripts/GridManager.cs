@@ -34,6 +34,7 @@ public class GridManager : MonoBehaviour
     private void Start()
     {
         GenerateGrid();
+        AssignNeighbours();
     }
 
     public void GenerateGrid()
@@ -55,6 +56,40 @@ public class GridManager : MonoBehaviour
 
     private void AssignNeighbours()
     {
-        //
+        for (int row = 0; row < _gridRows; row++)
+        {
+            for (int column = 0; column < _gridColumns; column++)
+            {
+                // Check row above cell; 3 neighbouring cells.
+                // Check cell's current row, 2 neighbouring cells at adjacent sides.
+                // Check row below cell; 3 neighbouring cells.
+                for (int localRow = -1; localRow < 2; localRow++)
+                {
+                    for (int localColumn = -1; localColumn < 2; localColumn++)
+                    {
+                        if (localRow == 0 && localColumn == 0) continue;
+                        Vector2Int neighbourIndex = new Vector2Int(row + localRow, column + localColumn);
+                        print(neighbourIndex);
+                        print(ValidGridIndex(row + localRow, column + localColumn));
+                        if (ValidGridIndex(row + localRow, column + localColumn))
+                        {
+                            _grid[row, column].AddNeighbour(_grid[neighbourIndex.x, neighbourIndex.y]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private bool ValidGridIndex(int row, int column)
+    {
+        if (row > 0 && row < _gridRows - 1)
+        {
+            if (column > 0 && column < _gridColumns - 1)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }
