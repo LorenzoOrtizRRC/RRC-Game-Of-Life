@@ -171,7 +171,9 @@ MonoBehaviour:
   _cellPrefab: {fileID: 8903818850590035807, guid: a54e5d73d4ee7104bb586811b3444ff6, type: 3}
   _gridRows: 30
   _gridColumns: 53
-  _gridUpdateIntervalInSeconds: 0.01
+  _toggleUpdate: 1
+  _gridUpdateIntervalInSeconds: 0.5
+  _randomAliveCellChance: 0.5
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0

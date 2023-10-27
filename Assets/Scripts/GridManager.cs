@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class GridManager : MonoBehaviour
@@ -10,14 +12,25 @@ public class GridManager : MonoBehaviour
     [Header("Grid Settings")]
     [SerializeField, Min(1)] private int _gridRows = 1;
     [SerializeField, Min(1)] private int _gridColumns = 1;
+    [SerializeField] private bool _toggleUpdate = true;
     [SerializeField, Min(0.01f)] private float _gridUpdateIntervalInSeconds = 0.4f;
+    [SerializeField, Range(0f, 1f)] private float _randomAliveCellChance = 0f;
 
     private GridCell[,] _grid;
+    // All tracked cells are ALIVE.
     private List<GridCell> _trackedCells = new List<GridCell>();
+    private List<GridCell> _nextTrackedCells = new List<GridCell>();
     private Vector2 _spriteScaling;// = 0f;
     private Vector2 _spriteBounds;
     private Vector2 _cellOffset;
     private Vector2 _gridStartPosition;
+
+    private int _currentGeneration = 0;
+
+    public int CurrentGeneration => _currentGeneration;
+
+    // Timers
+    private float _gridUpdateTimer;
 
     private void Awake()
     {
@@ -42,7 +55,22 @@ public class GridManager : MonoBehaviour
         _trackedCells = new List<GridCell>();
         foreach (GridCell cell in _grid)
         {
-            if (cell.IsAlive && !_trackedCells.Contains(cell)) _trackedCells.Add(cell);
+            print(cell);
+            if (cell.IsAlive && !_nextTrackedCells.Contains(cell)) _nextTrackedCells.Add(cell);
+        }
+        //_nextTrackedCells = new List<GridCell>(_trackedCells);
+    }
+
+    private void Update()
+    {
+        if (_gridUpdateTimer > 0f)
+        {
+            _gridUpdateTimer -= Time.deltaTime;
+        }
+        else
+        {
+            UpdateGrid();
+            _gridUpdateTimer = _gridUpdateIntervalInSeconds;
         }
     }
 
@@ -53,9 +81,12 @@ public class GridManager : MonoBehaviour
         {
             for (int column = 0; column < _gridColumns; column++)
             {
-                GridCell newCell = Instantiate(_cellPrefab);
-                newCell.OnCellAlive += TrackCellState;
-                newCell.OnCellDead += UntrackCellState;
+                GridCell newCell = Instantiate(_cellPrefab, transform.position, Quaternion.identity);
+                //newCell.OnCellAlive += TrackCellState;
+                //newCell.OnCellDead += UntrackCellState;
+                if (Random.Range(0f, 1f) <= _randomAliveCellChance) newCell.ToggleCellState(true);
+                else newCell.ToggleCellState(false);
+                newCell.PreviouslyAlive = newCell.IsAlive;
 
                 Vector2 newPosition = new Vector2(_spriteBounds.x * column, _spriteBounds.y * row) + _cellOffset + _gridStartPosition;
                 newCell.transform.position = newPosition;
@@ -64,6 +95,36 @@ public class GridManager : MonoBehaviour
                 _grid[row, column] = newCell;
             }
         }
+    }
+
+    private void UpdateGrid()
+    {
+        /*if (_nextTrackedCells.Any())
+        {
+            _trackedCells = new List<GridCell>(_nextTrackedCells);
+        }*/
+
+        /*foreach (GridCell cell in _trackedCells)
+        {
+            cell.CellUpdated = false;
+            cell.UpdateCellState();
+        }*/
+        foreach (GridCell cell in _grid)
+        {
+            //cell.CellUpdated = false;
+            cell.UpdateCellState();
+        }
+        /*
+        for (int i = 0; i < _trackedCells.Count; i++)
+        {
+            _trackedCells[i].CellUpdated = false;
+            _trackedCells[i].UpdateCellState();
+        }*/
+        /*
+        if (_nextTrackedCells.Any())
+        {
+            _trackedCells = new List<GridCell>(_nextTrackedCells);
+        }*/
     }
 
     private void AssignNeighbours()
@@ -91,14 +152,21 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    private void TrackCellState(GridCell cell) => _trackedCells.Add(cell);
-    private void UntrackCellState(GridCell cell) => _trackedCells.Remove(cell);
+    private void TrackCellState(GridCell cell)
+    {
+        if (_nextTrackedCells.Contains(cell)) return;
+        _nextTrackedCells.Add(cell);
+    }
+    private void UntrackCellState(GridCell cell)
+    {
+        _nextTrackedCells.Remove(cell);
+    }
 
     private bool ValidGridIndex(int row, int column)
     {
-        if (row > 0 && row < _gridRows - 1)
+        if (row >= 0 && row <= _gridRows - 1)
         {
-            if (column > 0 && column < _gridColumns - 1)
+            if (column >= 0 && column <= _gridColumns - 1)
             {
                 return true;
             }
