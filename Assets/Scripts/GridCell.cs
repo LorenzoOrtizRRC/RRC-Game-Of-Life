@@ -9,6 +9,7 @@ public class GridCell : MonoBehaviour
     [SerializeField] private bool _isAlive = false;
 
     public bool IsAlive => _isAlive;
+    public Vector2 SpriteBounds => _renderer.sprite.bounds.size;
 
     private GridCell[] _neighbours = new GridCell[0];
 
