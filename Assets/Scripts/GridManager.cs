@@ -11,6 +11,7 @@ public class GridManager : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private Camera _gridCamera;
+    [SerializeField] private Canvas _cellWorldCanvas;
     [SerializeField] private GridCell _cellPrefab;
     [Header("Grid Settings")]
     [SerializeField, Min(3)] private int _gridRows = 3;
@@ -96,11 +97,15 @@ public class GridManager : MonoBehaviour
                 OnGenerationStart += newCell.UpdateCellState;
                 OnGenerationEnd += newCell.ApplyNextState;
 
+
                 // Edit position, name, and scale.
                 newCell.transform.name = new string($"Cell_R{row}_C{column}");
                 Vector2 newPosition = new Vector2(_spriteBounds.x * column, _spriteBounds.y * row) + _cellOffset + _gridStartPosition;
                 newCell.transform.position = newPosition;
                 newCell.transform.localScale = new Vector3(_spriteBounds.x, _spriteBounds.y, 1f);
+
+                // Edit cell's button's parent.
+                newCell.CellToggleButton.SetParent(_cellWorldCanvas.transform, true);
 
                 _grid[row, column] = newCell;
             }

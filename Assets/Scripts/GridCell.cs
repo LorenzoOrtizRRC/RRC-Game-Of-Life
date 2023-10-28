@@ -7,8 +7,10 @@ using UnityEngine;
 public class GridCell : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer _renderer;
+    [SerializeField] private RectTransform _cellToggleButton;
     [SerializeField] private bool _isAlive = false;
 
+    public RectTransform CellToggleButton => _cellToggleButton;
     public bool IsAlive => _isAlive;
     public Vector2 SpriteBounds => _renderer.sprite.bounds.size;
 
