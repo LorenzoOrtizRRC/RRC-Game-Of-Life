@@ -1,11 +1,14 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class GridManager : MonoBehaviour
 {
+    public Action OnGenerationStart;
+    public Action OnGenerationEnd;
+
     [Header("References")]
     [SerializeField] private Camera _gridCamera;
     [SerializeField] private GridCell _cellPrefab;
@@ -15,6 +18,9 @@ public class GridManager : MonoBehaviour
     [SerializeField] private bool _toggleUpdate = true;
     [SerializeField, Min(0.01f)] private float _gridUpdateIntervalInSeconds = 0.4f;
     [SerializeField, Range(0f, 1f)] private float _randomAliveCellChance = 0f;
+    [Header("DEBUGGING")]
+    public GridCell[,] _storedGrid;
+    public bool DoNotInitOnAwake = false;
 
     private GridCell[,] _grid;
     // All tracked cells are ALIVE.
@@ -24,6 +30,7 @@ public class GridManager : MonoBehaviour
     private Vector2 _spriteBounds;
     private Vector2 _cellOffset;
     private Vector2 _gridStartPosition;
+    bool GEN0 = false;
 
     private int _currentGeneration = 0;
 
@@ -48,16 +55,19 @@ public class GridManager : MonoBehaviour
 
     private void Start()
     {
-        GenerateGrid();
-        AssignNeighbours();
+        if (!DoNotInitOnAwake)
+        {
+            InitializeGrid();
+            //nGenerationEnd?.Invoke();
+        }
 
         // Assign live cells to tracked cells list.
-        _trackedCells = new List<GridCell>();
+        /*_trackedCells = new List<GridCell>();
         foreach (GridCell cell in _grid)
         {
             print(cell);
             if (cell.IsAlive && !_nextTrackedCells.Contains(cell)) _nextTrackedCells.Add(cell);
-        }
+        }*/
         //_nextTrackedCells = new List<GridCell>(_trackedCells);
     }
 
@@ -69,9 +79,44 @@ public class GridManager : MonoBehaviour
         }
         else
         {
-            UpdateGrid();
-            _gridUpdateTimer = _gridUpdateIntervalInSeconds;
+            if (!GEN0)
+            {
+                OnGenerationStart.Invoke();
+                print("GEN START START");
+                GEN0 = true;
+            }
+            else
+            {
+                //UpdateGrid();
+                OnGenerationEnd.Invoke();
+                _gridUpdateTimer = _gridUpdateIntervalInSeconds;
+                GEN0 = false;
+                print("GEN END END END END");
+            }
         }
+    }
+
+    public void InitializeGrid()
+    {
+        GenerateGrid();
+        AssignNeighbours();
+    }
+
+    [ContextMenu("InitializeGridFromEditor")]
+    public void InitializeGridFromEditor()
+    {
+        float cameraHeight = 2f * _gridCamera.orthographicSize;
+        float cameraWidth = cameraHeight * _gridCamera.aspect;
+        _gridStartPosition = (Vector2)_gridCamera.transform.position - new Vector2(cameraWidth / 2f, cameraHeight / 2f);
+        //_spriteScaling = cameraHeight / Mathf.Max(_gridRows, _gridColumns);
+        _spriteBounds = new Vector2(_cellPrefab.SpriteBounds.x, _cellPrefab.SpriteBounds.y);
+        //_spriteScaling = new Vector2(cameraWidth / _spriteBounds.x, cameraHeight / _spriteBounds.y);
+        _spriteBounds.x = cameraWidth / (_gridColumns * _spriteBounds.x);
+        _spriteBounds.y *= cameraHeight / (_gridRows * _spriteBounds.y);
+        _cellOffset = _spriteBounds / 2f;
+        GenerateGrid();
+        AssignNeighbours();
+        _storedGrid = _grid;
     }
 
     public void GenerateGrid()
@@ -81,12 +126,17 @@ public class GridManager : MonoBehaviour
         {
             for (int column = 0; column < _gridColumns; column++)
             {
+                // Spawn cell, set cell's state, then store cell's current state.
                 GridCell newCell = Instantiate(_cellPrefab, transform.position, Quaternion.identity);
                 //newCell.OnCellAlive += TrackCellState;
                 //newCell.OnCellDead += UntrackCellState;
-                if (Random.Range(0f, 1f) <= _randomAliveCellChance) newCell.ToggleCellState(true);
+                if (UnityEngine.Random.Range(0f, 1f) <= _randomAliveCellChance) newCell.ToggleCellState(true);
                 else newCell.ToggleCellState(false);
-                newCell.PreviouslyAlive = newCell.IsAlive;
+                OnGenerationStart += newCell.UpdateCellState;
+                OnGenerationEnd += newCell.ApplyNextState;
+                // DEBUG
+                newCell.transform.name = new string($"cell_{row}_{column}");
+                //newCell.PreviouslyAlive = newCell.IsAlive;
 
                 Vector2 newPosition = new Vector2(_spriteBounds.x * column, _spriteBounds.y * row) + _cellOffset + _gridStartPosition;
                 newCell.transform.position = newPosition;
@@ -97,7 +147,7 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    private void UpdateGrid()
+   private void UpdateGrid()
     {
         /*if (_nextTrackedCells.Any())
         {
@@ -109,11 +159,12 @@ public class GridManager : MonoBehaviour
             cell.CellUpdated = false;
             cell.UpdateCellState();
         }*/
-        foreach (GridCell cell in _grid)
+        /*foreach (GridCell cell in _grid)
         {
             //cell.CellUpdated = false;
+            //cell.PreviouslyAlive = cell.IsAlive;
             cell.UpdateCellState();
-        }
+        }*/
         /*
         for (int i = 0; i < _trackedCells.Count; i++)
         {
@@ -141,10 +192,12 @@ public class GridManager : MonoBehaviour
                     for (int localColumn = -1; localColumn < 2; localColumn++)
                     {
                         if (localRow == 0 && localColumn == 0) continue;
-                        Vector2Int neighbourIndex = new Vector2Int(row + localRow, column + localColumn);
-                        if (ValidGridIndex(row + localRow, column + localColumn))
+                        //Vector2Int neighbourIndex = new Vector2Int(row + localRow, column + localColumn);
+                        int neighbourIndexRow = row + localRow;
+                        int neighbourIndexColumn = column + localColumn;
+                        if (ValidGridIndex(neighbourIndexRow, neighbourIndexColumn))
                         {
-                            _grid[row, column].AddNeighbour(_grid[neighbourIndex.x, neighbourIndex.y]);
+                            _grid[row, column].AddNeighbour(_grid[neighbourIndexRow, neighbourIndexColumn]);
                         }
                     }
                 }
