@@ -82,7 +82,6 @@ public class GridManager : MonoBehaviour
             if (!GEN0)
             {
                 OnGenerationStart.Invoke();
-                print("GEN START START");
                 GEN0 = true;
             }
             else
@@ -91,7 +90,6 @@ public class GridManager : MonoBehaviour
                 OnGenerationEnd.Invoke();
                 _gridUpdateTimer = _gridUpdateIntervalInSeconds;
                 GEN0 = false;
-                print("GEN END END END END");
             }
         }
     }
@@ -135,7 +133,7 @@ public class GridManager : MonoBehaviour
                 OnGenerationStart += newCell.UpdateCellState;
                 OnGenerationEnd += newCell.ApplyNextState;
                 // DEBUG
-                newCell.transform.name = new string($"cell_{row}_{column}");
+                newCell.transform.name = new string($"Cell_R{row}_C{column}");
                 //newCell.PreviouslyAlive = newCell.IsAlive;
 
                 Vector2 newPosition = new Vector2(_spriteBounds.x * column, _spriteBounds.y * row) + _cellOffset + _gridStartPosition;

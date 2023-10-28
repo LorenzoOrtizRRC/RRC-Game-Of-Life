@@ -101,17 +101,12 @@ public class GridCell : MonoBehaviour
         {
             if (liveNeighbours == 3)
             {
-                Debug.LogError("AAHHHH");
-                GridCell[] liveOnes = _neighbours.FindAll((x) => x.IsAlive).ToArray();
-                print($"DEAD CELL NOW ALIVE! name: {transform.name}, neighbours alive: {liveNeighbours}");
-                foreach (var thing in liveOnes) print("name: " + transform.name + " thing name: " + thing.transform.name + " ");
                 _nextState = true;      // Reproduction.
             }
 
         }
         else
         {
-            Debug.LogError("EHEHEHEHE");
             if (liveNeighbours >= 2 && liveNeighbours <= 3) _nextState = true;      // Keep alive.
             else _nextState = false;        // Overpopulation / underpopulation.
         }
