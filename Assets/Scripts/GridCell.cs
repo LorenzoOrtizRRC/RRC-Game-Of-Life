@@ -34,6 +34,12 @@ public class GridCell : MonoBehaviour
         }
     }
 
+    // Called upon by player inputs.
+    public void ManualToggleState()
+    {
+        ToggleCellState(!IsAlive);
+    }
+
     public void ToggleCellState(bool newAliveState)
     {
         _isAlive = newAliveState;

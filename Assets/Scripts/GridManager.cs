@@ -33,7 +33,7 @@ public class GridManager : MonoBehaviour
 
     private void Awake()
     {
-        // Camera height and width in unity units.
+        // Camera height and width in unity units. These will serve as the grid area.
         float cameraHeight = 2f * _gridCamera.orthographicSize;
         float cameraWidth = cameraHeight * _gridCamera.aspect;
 
