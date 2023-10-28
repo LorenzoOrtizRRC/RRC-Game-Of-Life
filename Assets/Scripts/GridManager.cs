@@ -17,6 +17,7 @@ public class GridManager : MonoBehaviour
     [SerializeField, Min(3)] private int _gridColumns = 3;
     [SerializeField, Min(0.01f)] private float _gridUpdateIntervalInSeconds = 0.4f;
     [SerializeField, Range(0f, 1f)] private float _randomAliveCellChance = 0f;
+    [SerializeField] private bool _gridUpdatesEnabled = false;      // Generations per update. Toggled via GUI.
 
     private GridCell[,] _grid;
     private Vector2 _spriteBounds;
@@ -50,18 +51,22 @@ public class GridManager : MonoBehaviour
 
     private void Update()
     {
-        if (_gridUpdateTimer > 0f)
+        if (_gridUpdatesEnabled)
         {
-            _gridUpdateTimer -= Time.deltaTime;
-        }
-        else
-        {
-            // Update grid using events.
-            // Note to self: it's more painful to manage and track the previous generation state of each cell, which is required to get the next state of each cell in the next generations, via manual iteration through a list.
-            // Therefore, this event is here to solve that bullshit.
-            OnGenerationStart.Invoke();
-            OnGenerationEnd.Invoke();
-            _gridUpdateTimer = _gridUpdateIntervalInSeconds;
+            if (_gridUpdateTimer > 0f)
+            {
+                _gridUpdateTimer -= Time.deltaTime;
+            }
+            else
+            {
+                // Update grid using events.
+                // Note to self: it's more painful to manage and track the previous generation state of each cell,
+                // which is required to get the next state of each cell in the next generations, via manual iteration through a list.
+                // Therefore, this event is here to solve that bullshit.
+                OnGenerationStart.Invoke();
+                OnGenerationEnd.Invoke();
+                _gridUpdateTimer = _gridUpdateIntervalInSeconds;
+            }
         }
     }
 
@@ -71,23 +76,13 @@ public class GridManager : MonoBehaviour
         AssignNeighbours();
     }
 
-    [ContextMenu("InitializeGridFromEditor")]
-    public void InitializeGridFromEditor()
+    public void ToggleGridUpdates()
     {
-        float cameraHeight = 2f * _gridCamera.orthographicSize;
-        float cameraWidth = cameraHeight * _gridCamera.aspect;
-
-        _gridStartPosition = (Vector2)_gridCamera.transform.position - new Vector2(cameraWidth / 2f, cameraHeight / 2f);
-        _spriteBounds = new Vector2(_cellPrefab.SpriteBounds.x, _cellPrefab.SpriteBounds.y);
-        _spriteBounds.x = cameraWidth / (_gridColumns * _spriteBounds.x);
-        _spriteBounds.y *= cameraHeight / (_gridRows * _spriteBounds.y);
-        _cellOffset = _spriteBounds / 2f;
-
-        GenerateGrid();
-        AssignNeighbours();
+        _gridUpdatesEnabled = !_gridUpdatesEnabled;
+        if (_gridUpdatesEnabled) _gridUpdateTimer = _gridUpdateIntervalInSeconds;
     }
 
-    public void GenerateGrid()
+    private void GenerateGrid()
     {
         _grid = new GridCell[_gridRows, _gridColumns];
         for (int row = 0; row < _gridRows; row++)

@@ -26,7 +26,6 @@ public class GridCell : MonoBehaviour
             {
                 _nextState = true;      // Reproduction.
             }
-
         }
         else
         {
