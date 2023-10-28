@@ -139,7 +139,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &218721261
 Transform:
   m_ObjectHideFlags: 0
@@ -169,12 +169,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _gridCamera: {fileID: 519420031}
   _cellPrefab: {fileID: 8903818850590035807, guid: a54e5d73d4ee7104bb586811b3444ff6, type: 3}
-  _gridRows: 30
-  _gridColumns: 53
-  _toggleUpdate: 1
-  _gridUpdateIntervalInSeconds: 0.4
-  _randomAliveCellChance: 0.05
-  DoNotInitOnAwake: 0
+  _gridRows: 50
+  _gridColumns: 90
+  _gridUpdateIntervalInSeconds: 0.2
+  _randomAliveCellChance: 0.3
 --- !u!1 &361380761
 GameObject:
   m_ObjectHideFlags: 0
@@ -191,7 +189,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &361380762
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -208,10 +206,8 @@ MonoBehaviour:
   _cellPrefab: {fileID: 8903818850590035807, guid: a54e5d73d4ee7104bb586811b3444ff6, type: 3}
   _gridRows: 50
   _gridColumns: 100
-  _toggleUpdate: 1
   _gridUpdateIntervalInSeconds: 0.15
   _randomAliveCellChance: 0.3
-  DoNotInitOnAwake: 0
 --- !u!4 &361380763
 Transform:
   m_ObjectHideFlags: 0

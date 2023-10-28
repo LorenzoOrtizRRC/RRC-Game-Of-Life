@@ -13,24 +13,15 @@ public class GridManager : MonoBehaviour
     [SerializeField] private Camera _gridCamera;
     [SerializeField] private GridCell _cellPrefab;
     [Header("Grid Settings")]
-    [SerializeField, Min(1)] private int _gridRows = 1;
-    [SerializeField, Min(1)] private int _gridColumns = 1;
-    [SerializeField] private bool _toggleUpdate = true;
+    [SerializeField, Min(3)] private int _gridRows = 3;
+    [SerializeField, Min(3)] private int _gridColumns = 3;
     [SerializeField, Min(0.01f)] private float _gridUpdateIntervalInSeconds = 0.4f;
     [SerializeField, Range(0f, 1f)] private float _randomAliveCellChance = 0f;
-    [Header("DEBUGGING")]
-    public GridCell[,] _storedGrid;
-    public bool DoNotInitOnAwake = false;
 
     private GridCell[,] _grid;
-    // All tracked cells are ALIVE.
-    private List<GridCell> _trackedCells = new List<GridCell>();
-    private List<GridCell> _nextTrackedCells = new List<GridCell>();
-    private Vector2 _spriteScaling;// = 0f;
     private Vector2 _spriteBounds;
     private Vector2 _cellOffset;
     private Vector2 _gridStartPosition;
-    bool GEN0 = false;
 
     private int _currentGeneration = 0;
 
@@ -44,10 +35,9 @@ public class GridManager : MonoBehaviour
         // Camera height and width in unity units.
         float cameraHeight = 2f * _gridCamera.orthographicSize;
         float cameraWidth = cameraHeight * _gridCamera.aspect;
+
         _gridStartPosition = (Vector2)_gridCamera.transform.position - new Vector2(cameraWidth / 2f, cameraHeight / 2f);
-        //_spriteScaling = cameraHeight / Mathf.Max(_gridRows, _gridColumns);
         _spriteBounds = new Vector2(_cellPrefab.SpriteBounds.x, _cellPrefab.SpriteBounds.y);
-        //_spriteScaling = new Vector2(cameraWidth / _spriteBounds.x, cameraHeight / _spriteBounds.y);
         _spriteBounds.x = cameraWidth / (_gridColumns * _spriteBounds.x);
         _spriteBounds.y *= cameraHeight / (_gridRows * _spriteBounds.y);
         _cellOffset = _spriteBounds / 2f;
@@ -55,20 +45,7 @@ public class GridManager : MonoBehaviour
 
     private void Start()
     {
-        if (!DoNotInitOnAwake)
-        {
-            InitializeGrid();
-            //nGenerationEnd?.Invoke();
-        }
-
-        // Assign live cells to tracked cells list.
-        /*_trackedCells = new List<GridCell>();
-        foreach (GridCell cell in _grid)
-        {
-            print(cell);
-            if (cell.IsAlive && !_nextTrackedCells.Contains(cell)) _nextTrackedCells.Add(cell);
-        }*/
-        //_nextTrackedCells = new List<GridCell>(_trackedCells);
+        InitializeGrid();
     }
 
     private void Update()
@@ -79,18 +56,12 @@ public class GridManager : MonoBehaviour
         }
         else
         {
-            if (!GEN0)
-            {
-                OnGenerationStart.Invoke();
-                GEN0 = true;
-            }
-            else
-            {
-                //UpdateGrid();
-                OnGenerationEnd.Invoke();
-                _gridUpdateTimer = _gridUpdateIntervalInSeconds;
-                GEN0 = false;
-            }
+            // Update grid using events.
+            // Note to self: it's more painful to manage and track the previous generation state of each cell, which is required to get the next state of each cell in the next generations, via manual iteration through a list.
+            // Therefore, this event is here to solve that bullshit.
+            OnGenerationStart.Invoke();
+            OnGenerationEnd.Invoke();
+            _gridUpdateTimer = _gridUpdateIntervalInSeconds;
         }
     }
 
@@ -105,16 +76,15 @@ public class GridManager : MonoBehaviour
     {
         float cameraHeight = 2f * _gridCamera.orthographicSize;
         float cameraWidth = cameraHeight * _gridCamera.aspect;
+
         _gridStartPosition = (Vector2)_gridCamera.transform.position - new Vector2(cameraWidth / 2f, cameraHeight / 2f);
-        //_spriteScaling = cameraHeight / Mathf.Max(_gridRows, _gridColumns);
         _spriteBounds = new Vector2(_cellPrefab.SpriteBounds.x, _cellPrefab.SpriteBounds.y);
-        //_spriteScaling = new Vector2(cameraWidth / _spriteBounds.x, cameraHeight / _spriteBounds.y);
         _spriteBounds.x = cameraWidth / (_gridColumns * _spriteBounds.x);
         _spriteBounds.y *= cameraHeight / (_gridRows * _spriteBounds.y);
         _cellOffset = _spriteBounds / 2f;
+
         GenerateGrid();
         AssignNeighbours();
-        _storedGrid = _grid;
     }
 
     public void GenerateGrid()
@@ -126,54 +96,20 @@ public class GridManager : MonoBehaviour
             {
                 // Spawn cell, set cell's state, then store cell's current state.
                 GridCell newCell = Instantiate(_cellPrefab, transform.position, Quaternion.identity);
-                //newCell.OnCellAlive += TrackCellState;
-                //newCell.OnCellDead += UntrackCellState;
                 if (UnityEngine.Random.Range(0f, 1f) <= _randomAliveCellChance) newCell.ToggleCellState(true);
                 else newCell.ToggleCellState(false);
                 OnGenerationStart += newCell.UpdateCellState;
                 OnGenerationEnd += newCell.ApplyNextState;
-                // DEBUG
-                newCell.transform.name = new string($"Cell_R{row}_C{column}");
-                //newCell.PreviouslyAlive = newCell.IsAlive;
 
+                // Edit position, name, and scale.
+                newCell.transform.name = new string($"Cell_R{row}_C{column}");
                 Vector2 newPosition = new Vector2(_spriteBounds.x * column, _spriteBounds.y * row) + _cellOffset + _gridStartPosition;
                 newCell.transform.position = newPosition;
-                //newCell.transform.localScale = _spriteScaling;
                 newCell.transform.localScale = new Vector3(_spriteBounds.x, _spriteBounds.y, 1f);
+
                 _grid[row, column] = newCell;
             }
         }
-    }
-
-   private void UpdateGrid()
-    {
-        /*if (_nextTrackedCells.Any())
-        {
-            _trackedCells = new List<GridCell>(_nextTrackedCells);
-        }*/
-
-        /*foreach (GridCell cell in _trackedCells)
-        {
-            cell.CellUpdated = false;
-            cell.UpdateCellState();
-        }*/
-        /*foreach (GridCell cell in _grid)
-        {
-            //cell.CellUpdated = false;
-            //cell.PreviouslyAlive = cell.IsAlive;
-            cell.UpdateCellState();
-        }*/
-        /*
-        for (int i = 0; i < _trackedCells.Count; i++)
-        {
-            _trackedCells[i].CellUpdated = false;
-            _trackedCells[i].UpdateCellState();
-        }*/
-        /*
-        if (_nextTrackedCells.Any())
-        {
-            _trackedCells = new List<GridCell>(_nextTrackedCells);
-        }*/
     }
 
     private void AssignNeighbours()
@@ -201,16 +137,6 @@ public class GridManager : MonoBehaviour
                 }
             }
         }
-    }
-
-    private void TrackCellState(GridCell cell)
-    {
-        if (_nextTrackedCells.Contains(cell)) return;
-        _nextTrackedCells.Add(cell);
-    }
-    private void UntrackCellState(GridCell cell)
-    {
-        _nextTrackedCells.Remove(cell);
     }
 
     private bool ValidGridIndex(int row, int column)
